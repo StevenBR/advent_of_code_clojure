@@ -16,13 +16,13 @@
       keys
       (apply str)))
 
-(defn- parse-line
+(defn parse-line
   [input]
-  (let [contents (clojure.string/split input #"\[|\]|-")
-        checksum (last contents)
-        id (read-string (nth contents (- (count contents) 2)))
-        hash (apply str (drop-last 2 contents))]
-        {:hash hash :id id :checksum checksum}))
+  (let [contents (split input #"\[|\]|-")]
+  (-> {}
+      (merge {:checksum (last contents)})
+      (merge {:hash (apply str (drop-last 2 contents))})
+      (merge {:id (read-string (last (butlast contents)))}))))
 
 (defn valid-room?
   [{:keys [hash checksum]}]
