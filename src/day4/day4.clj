@@ -6,7 +6,7 @@
   [line]
   (-> line (split #"\[|]") last))
 
-  (defn get-hash
+(defn- get-hash
   [input]
   (->> input
       frequencies
@@ -16,18 +16,17 @@
       keys
       (apply str)))
 
-(defn parse-line
+(defn- parse-line
   [input]
   (let [contents (clojure.string/split input #"\[|\]|-")
         checksum (last contents)
         id (read-string (nth contents (- (count contents) 2)))
-        hash (get-hash (apply str (drop-last 2 contents)))
-        name (apply str (drop-last 2 contents))]
-        {:name name :hash hash :id id :checksum checksum}))
+        hash (apply str (drop-last 2 contents))]
+        {:hash hash :id id :checksum checksum}))
 
 (defn valid-room?
   [{:keys [hash checksum]}]
-  (= hash checksum))
+  (= (get-hash hash) checksum))
 
 (defn sector-id-total
   [lines]
@@ -37,7 +36,29 @@
       (map :id)
       (apply +)))
 
+(defn shift-letter [n letter]
+  (-> letter
+      int
+      (- 97)
+      (+ n)
+      (mod 26)
+      (+ 97)
+      char))
 
-;######### part 2
+(defn decrypt [{:keys [hash id] :as room}]
+  (assoc room :decrypted
+         (apply str (map (partial shift-letter id) hash))))
 
+(defn north-pole?
+  [contents]
+  (re-matches #".*north.*" (:decrypted contents)))
 
+(defn get-secret-id
+  [lines]
+  (->> lines
+    (map parse-line)
+    (filter valid-room?)
+    (map decrypt)
+    (filter north-pole?)
+    first
+    :id))
